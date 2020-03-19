@@ -16,9 +16,9 @@ def create_app(config_class=Config):
     db.init_app(app)
     migrate.init_app(app, db)
 
-    from app.account import bp as account_bp
+    from app.account import bp as account_api_bp
 
-    app.register_blueprint(account_bp, url_prefix="/accounts")
+    app.register_blueprint(account_api_bp, url_prefix="/accounts/api/v1")
 
     return app
 

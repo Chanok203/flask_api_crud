@@ -3,6 +3,6 @@ from flask_restful import Api
 
 
 bp = Blueprint("account", __name__)
-api = Api(bp, prefix="/api/v1")
+api = Api(bp)
 
 from app.account import routes
