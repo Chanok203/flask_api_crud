@@ -1,6 +1,8 @@
 from flask_restful import Resource, reqparse, inputs
 from app.models import User
 from app import auth
+from app import verify_password
+from flask import g
 
 
 class UserAPI(Resource):
@@ -14,7 +16,7 @@ class UserAPI(Resource):
         user = User.get_by_id(id)
         if user:
             return {"user": user.to_json()}, 200
-        return {"message": "ไม่พบผู้ใช้นี้"}, 404
+        return {"message": "The user not found."}, 404
 
     @auth.login_required
     def put(self, id):
@@ -34,9 +36,9 @@ class UserAPI(Resource):
                 user.save()
                 return {"user": user.to_json()}, 200
             except:
-                return {"message": "ไม่สามารถแก้ไขผู้ใช้ได้"}, 500
+                return {"message": "Cannot edit user."}, 500
 
-        return {"message": "ไม่พบผู้ใช้นี้"}, 404
+        return {"message": "The user not found."}, 404
 
     @auth.login_required
     def delete(self, id):
@@ -44,11 +46,11 @@ class UserAPI(Resource):
         if user:
             try:
                 user.delete()
-                return {"message": "ลบผู้ใช้เรียบร้อยแล้ว"}, 200
+                return {"message": "The user was deleted successfully."}, 200
             except:
-                return {"message": "ไม่สามารถลบผู้ใช้ได้"}, 500
+                return {"message": "Cannot delete user."}, 500
 
-        return {"message": "ไม่พบผู้ใช้นี้"}, 404
+        return {"message": "The user not found."}, 404
 
 
 class UserListAPI(Resource):
@@ -71,7 +73,7 @@ class UserListAPI(Resource):
         is_staff = data["is_staff"]
 
         if User.get_by_username(username):
-            return {"message": "ชื่อผู้ใช้นี้มีอยู่แล้ว"}, 409
+            return {"message": "The username already exists."}, 409
 
         user = User(
             username=username,
@@ -83,4 +85,19 @@ class UserListAPI(Resource):
             user.save()
             return user.to_json(), 201
         except:
-            return {"message": "ไม่สามารถสร้างชื่อผู้ใช้ได้"}, 500
+            return {"message": "Cannot create user."}, 500
+
+
+class UserLogin(Resource):
+    def __init__(self):
+        self.parser = reqparse.RequestParser(bundle_errors=True)
+        self.parser.add_argument("username", type=str, required=True)
+        self.parser.add_argument("password", type=str, required=True)
+
+    def post(self):
+        data = self.parser.parse_args()
+        username = data["username"]
+        password = data["password"]
+        if verify_password(username, password):
+            return g.user.to_json(), 200
+        return {"message": "Incorrect uername or password."}, 401
